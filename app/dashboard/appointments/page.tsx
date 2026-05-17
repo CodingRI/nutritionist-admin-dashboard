@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Calendar, Clock, User, Phone, Plus, MoreHorizontal, CheckCircle, Clock3, XCircle } from 'lucide-react'
+import Link from 'next/link'
 
 const mockAppointments = [
   {
@@ -114,10 +115,11 @@ export default function AppointmentsPage() {
           <h1 className="page-title">Appointments</h1>
           <p className="page-subtitle">Manage client consultations and bookings</p>
         </div>
+        <Link href="/dashboard/appointments/review" className='gap-2'>
         <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Schedule Appointment
+          Review and Schedule
         </Button>
+        </Link>
       </div>
 
       <Card className="p-6">
