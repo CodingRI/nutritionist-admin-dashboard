@@ -38,7 +38,7 @@ export default function ReviewAppointmentsPage() {
 
   async function updateAppointmentStatus(
     appointmentId: string,
-    status: "APPROVED" | "REJECTED",
+    status: "PAYMENT_PENDING" | "REJECTED",
   ) {
     try {
       setProcessingId(appointmentId);
@@ -54,6 +54,7 @@ export default function ReviewAppointmentsPage() {
           },
           body: JSON.stringify({
             status,
+            amount: 500,
           }),
         },
       );
@@ -278,7 +279,10 @@ export default function ReviewAppointmentsPage() {
                       >
                         <Button
                           onClick={() =>
-                            updateAppointmentStatus(appointment.id, "APPROVED")
+                            updateAppointmentStatus(
+                              appointment.id,
+                              "PAYMENT_PENDING",
+                            )
                           }
                           disabled={processingId === appointment.id}
                           className="w-full bg-primary hover:bg-primary/90 text-primary-foreground flex items-center gap-2"
@@ -287,7 +291,7 @@ export default function ReviewAppointmentsPage() {
                           <CheckCircle className="h-4 w-4" />
                           {processingId === appointment.id
                             ? "Processing..."
-                            : "Approve"}
+                            : "Verify & Request Payment"}
                         </Button>
                       </motion.div>
 
