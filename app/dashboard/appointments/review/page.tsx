@@ -91,6 +91,7 @@ export default function ReviewAppointmentsPage() {
   const mainAppUrl = process.env.NEXT_PUBLIC_MAIN_APP_URL;
 
   async function fetchPendingAppointments() {
+    const token = await getToken()
     try {
       setIsLoading(true);
       setError(null);
@@ -99,6 +100,10 @@ export default function ReviewAppointmentsPage() {
         method: "GET",
         credentials: "include",
         cache: "no-store",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}` // Explicit token attachment
+        },
       });
 
       const data = await res.json();

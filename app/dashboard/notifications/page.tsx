@@ -158,6 +158,7 @@ export default function NotificationsPage() {
 
   async function fetchNotifications() {
     try {
+      const token = await getToken()
       setIsLoading(true)
       setError(null)
 
@@ -169,6 +170,10 @@ export default function NotificationsPage() {
         method: 'GET',
         credentials: 'include',
         cache: 'no-store',
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
       })
 
       const data = await res.json()
