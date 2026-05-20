@@ -1,0 +1,15 @@
+import { clerkMiddleware } from "@clerk/nextjs/server";
+
+export default clerkMiddleware({
+  authorizedParties: [
+    "https://nourishwell.in",
+    "https://dashboard.nourishwell.in",
+  ],
+});
+
+export const config = {
+  matcher: [
+    "/((?!_next|.*\\..*).*)",
+    "/(api|trpc)(.*)",
+  ],
+};
