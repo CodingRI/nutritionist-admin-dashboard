@@ -6,6 +6,7 @@ import { CheckCircle, XCircle, Loader, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@clerk/nextjs";
 
 type PendingAppointment = {
   id: string;
@@ -36,11 +37,16 @@ export default function ReviewAppointmentsPage() {
   const [error, setError] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
+  const {getToken} = useAuth();
+
+
   async function updateAppointmentStatus(
     appointmentId: string,
     status: "PAYMENT_PENDING" | "REJECTED",
   ) {
+    
     try {
+      const token = await getToken();
       setProcessingId(appointmentId);
       setError(null);
 
@@ -51,6 +57,7 @@ export default function ReviewAppointmentsPage() {
           credentials: "include",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
           },
           body: JSON.stringify({
             status,

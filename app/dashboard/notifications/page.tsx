@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
+import { useAuth } from "@clerk/nextjs";
 import {
   Clock,
   CheckCircle,
@@ -130,6 +131,8 @@ function formatNotificationTime(dateString: string) {
   return date.toLocaleDateString()
 }
 
+
+
 export default function NotificationsPage() {
   const router = useRouter()
 
@@ -140,6 +143,8 @@ export default function NotificationsPage() {
   const [processingId, setProcessingId] = useState<string | null>(null)
   const [isMarkingAll, setIsMarkingAll] = useState(false)
 
+  const {getToken} = useAuth();
+
   const mainAppUrl = process.env.NEXT_PUBLIC_MAIN_APP_URL
 
   const todayNotifications = useMemo(() => {
@@ -149,6 +154,7 @@ export default function NotificationsPage() {
   const earlierNotifications = useMemo(() => {
     return notifications.filter((notification) => !isToday(notification.createdAt))
   }, [notifications])
+
 
   async function fetchNotifications() {
     try {
@@ -188,12 +194,16 @@ export default function NotificationsPage() {
   async function markAsRead(notificationId: string) {
     try {
       setProcessingId(notificationId)
-
+      const token = await getToken();
       const res = await fetch(
         `${mainAppUrl}/api/admin/notifications/${notificationId}/read`,
         {
           method: 'PATCH',
           credentials: 'include',
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
         }
       )
 
@@ -234,6 +244,7 @@ export default function NotificationsPage() {
 
   async function markAllAsRead() {
     try {
+      const token = await getToken();
       setIsMarkingAll(true)
       setError(null)
 
@@ -246,6 +257,10 @@ export default function NotificationsPage() {
           fetch(`${mainAppUrl}/api/admin/notifications/${notification.id}/read`, {
             method: 'PATCH',
             credentials: 'include',
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
           })
         )
       )
