@@ -1,124 +1,205 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card } from '@/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Calendar, Clock, User, Phone, Plus, MoreHorizontal, CheckCircle, Clock3, XCircle } from 'lucide-react'
-import Link from 'next/link'
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Calendar,
+  Clock,
+  User,
+  Phone,
+  Plus,
+  MoreHorizontal,
+  CheckCircle,
+  Clock3,
+  XCircle,
+} from "lucide-react";
+import Link from "next/link";
 
-const mockAppointments = [
-  {
-    id: 1,
-    clientName: 'Sarah Johnson',
-    phone: '+1 (555) 123-4567',
-    date: '2024-06-15',
-    time: '10:00 AM',
-    type: 'Initial Consultation',
-    status: 'Confirmed',
-    duration: '60 mins'
-  },
-  {
-    id: 2,
-    clientName: 'Michael Chen',
-    phone: '+1 (555) 234-5678',
-    date: '2024-06-15',
-    time: '11:30 AM',
-    type: 'Follow-up',
-    status: 'Confirmed',
-    duration: '45 mins'
-  },
-  {
-    id: 3,
-    clientName: 'Emily Rodriguez',
-    phone: '+1 (555) 345-6789',
-    date: '2024-06-16',
-    time: '02:00 PM',
-    type: 'Initial Consultation',
-    status: 'Pending',
-    duration: '60 mins'
-  },
-  {
-    id: 4,
-    clientName: 'David Kim',
-    phone: '+1 (555) 456-7890',
-    date: '2024-06-17',
-    time: '09:00 AM',
-    type: 'Follow-up',
-    status: 'Completed',
-    duration: '45 mins'
-  },
-  {
-    id: 5,
-    clientName: 'Jessica Lee',
-    phone: '+1 (555) 567-8901',
-    date: '2024-06-17',
-    time: '03:30 PM',
-    type: 'Initial Consultation',
-    status: 'Cancelled',
-    duration: '60 mins'
-  },
-]
+type AppointmentUI = {
+  id: string;
+  clientName: string;
+  phone: string;
+  date: string;
+  time: string;
+  type: string;
+  duration: string;
+  status: string;
+};
 
 export default function AppointmentsPage() {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filteredAppointments, setFilteredAppointments] = useState(mockAppointments)
+  const [searchTerm, setSearchTerm] = useState("");
+  const [appointments, setAppointments] = useState<AppointmentUI[]>([]);
+  const [filteredAppointments, setFilteredAppointments] = useState<
+    AppointmentUI[]
+  >([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchAppointments = async () => {
+    try {
+      setLoading(true);
+
+      const response = await fetch("/api/admin/appointments");
+
+      const data = await response.json();
+
+      if (!data.success) {
+        console.error(data.message);
+        return;
+      }
+
+      const normalizedAppointments: AppointmentUI[] = data.appointments.map(
+        (appointment: any) => {
+          const scheduledStart = appointment.scheduledStart
+            ? new Date(appointment.scheduledStart)
+            : null;
+
+          const scheduledEnd = appointment.scheduledEnd
+            ? new Date(appointment.scheduledEnd)
+            : null;
+
+          let duration = "--";
+
+          if (scheduledStart && scheduledEnd) {
+            const diffMs = scheduledEnd.getTime() - scheduledStart.getTime();
+
+            const diffMinutes = Math.floor(diffMs / 1000 / 60);
+
+            duration = `${diffMinutes} mins`;
+          }
+
+          return {
+            id: appointment.id,
+
+            clientName:
+              `${appointment.firstName || ""} ${
+                appointment.lastName || ""
+              }`.trim() ||
+              appointment.user?.fullName ||
+              "Unknown Client",
+
+            phone: appointment.phone || appointment.user?.phoneNumber || "--",
+
+            date: scheduledStart
+              ? scheduledStart.toLocaleDateString()
+              : appointment.requestDate
+              ? new Date(appointment.requestDate).toLocaleDateString()
+              : "--",
+
+            time: scheduledStart
+              ? scheduledStart.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "Not Scheduled",
+
+            type: appointment.consultationType,
+
+            duration,
+
+            status: appointment.status,
+          };
+        }
+      );
+
+      setAppointments(normalizedAppointments);
+      setFilteredAppointments(normalizedAppointments);
+    } catch (error) {
+      console.error("FETCH_APPOINTMENTS_ERROR:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const term = e.target.value.toLowerCase()
-    setSearchTerm(term)
+    const term = e.target.value.toLowerCase();
+    setSearchTerm(term);
     setFilteredAppointments(
-      mockAppointments.filter(apt =>
-        apt.clientName.toLowerCase().includes(term) ||
-        apt.type.toLowerCase().includes(term)
+      appointments.filter(
+        (apt) =>
+          apt.clientName.toLowerCase().includes(term) ||
+          apt.type.toLowerCase().includes(term)
       )
-    )
-  }
+    );
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'Confirmed':
-        return <CheckCircle className="h-4 w-4 text-green-600" />
-      case 'Pending':
-        return <Clock3 className="h-4 w-4 text-yellow-600" />
-      case 'Completed':
-        return <CheckCircle className="h-4 w-4 text-blue-600" />
-      case 'Cancelled':
-        return <XCircle className="h-4 w-4 text-red-600" />
+      case "SCHEDULED":
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
+
+      case "PENDING":
+        return <Clock3 className="h-4 w-4 text-yellow-600" />;
+
+      case "PAYMENT_PENDING":
+        return <Clock3 className="h-4 w-4 text-orange-600" />;
+
+      case "COMPLETED":
+        return <CheckCircle className="h-4 w-4 text-blue-600" />;
+
+      case "CANCELLED":
+      case "REJECTED":
+        return <XCircle className="h-4 w-4 text-red-600" />;
+
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Confirmed':
-        return 'bg-green-100 text-green-800'
-      case 'Pending':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'Completed':
-        return 'bg-blue-100 text-blue-800'
-      case 'Cancelled':
-        return 'bg-red-100 text-red-800'
+      case "SCHEDULED":
+        return "bg-green-100 text-green-800";
+
+      case "PENDING":
+        return "bg-yellow-100 text-yellow-800";
+
+      case "PAYMENT_PENDING":
+        return "bg-orange-100 text-orange-800";
+
+      case "COMPLETED":
+        return "bg-blue-100 text-blue-800";
+
+      case "CANCELLED":
+      case "REJECTED":
+        return "bg-red-100 text-red-800";
+
       default:
-        return 'bg-gray-100 text-gray-800'
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="page-title">Appointments</h1>
-          <p className="page-subtitle">Manage client consultations and bookings</p>
+          <p className="page-subtitle">
+            Manage client consultations and bookings
+          </p>
         </div>
-        <Link href="/dashboard/appointments/review" className='gap-2'>
-        <Button className="gap-2">
-          Review and Schedule
-        </Button>
+        <Link href="/dashboard/appointments/review" className="gap-2">
+          <Button className="gap-2">Review and Schedule</Button>
         </Link>
       </div>
 
@@ -148,58 +229,88 @@ export default function AppointmentsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAppointments.map(apt => (
-                <TableRow key={apt.id} className="hover:bg-secondary/5">
-                  <TableCell className="font-medium">{apt.clientName}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      {apt.phone}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      {new Date(apt.date).toLocaleDateString()}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      {apt.time}
-                    </div>
-                  </TableCell>
-                  <TableCell>{apt.type}</TableCell>
-                  <TableCell>{apt.duration}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(apt.status)}
-                      <Badge className={getStatusColor(apt.status)}>
-                        {apt.status}
-                      </Badge>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>View Details</DropdownMenuItem>
-                        <DropdownMenuItem>Reschedule</DropdownMenuItem>
-                        <DropdownMenuItem>Send Reminder</DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">Cancel</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-10">
+                    Loading appointments...
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : filteredAppointments.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-10">
+                    No appointments found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredAppointments.map((apt) => (
+                  <TableRow key={apt.id} className="hover:bg-secondary/5">
+                    <TableCell className="font-medium">
+                      {apt.clientName}
+                    </TableCell>
+
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        {apt.phone}
+                      </div>
+                    </TableCell>
+
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        {apt.date}
+                      </div>
+                    </TableCell>
+
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        {apt.time}
+                      </div>
+                    </TableCell>
+
+                    <TableCell>{apt.type}</TableCell>
+
+                    <TableCell>{apt.duration}</TableCell>
+
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(apt.status)}
+
+                        <Badge className={getStatusColor(apt.status)}>
+                          {apt.status.replaceAll("_", " ")}
+                        </Badge>
+                      </div>
+                    </TableCell>
+
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem>View Details</DropdownMenuItem>
+
+                          <DropdownMenuItem>Reschedule</DropdownMenuItem>
+
+                          <DropdownMenuItem>Send Reminder</DropdownMenuItem>
+
+                          <DropdownMenuItem className="text-red-600">
+                            Cancel
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
       </Card>
     </div>
-  )
+  );
 }
