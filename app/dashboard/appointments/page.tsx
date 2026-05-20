@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { auth } from "@clerk/nextjs/server";
+import { useAuth } from "@clerk/nextjs";
 import {
   Table,
   TableBody,
@@ -52,12 +52,14 @@ export default function AppointmentsPage() {
   >([]);
   const [loading, setLoading] = useState(true);
 
+  const {getToken} = useAuth();
+
   const mainAppUrl = process.env.NEXT_PUBLIC_MAIN_APP_URL;
   const fetchAppointments = async () => {
     try {
       setLoading(true);
 
-      const {getToken} = await auth();
+
       const token = await getToken();
       const response = await fetch(`${mainAppUrl}/api/admin/appointments`, {
         headers: {
