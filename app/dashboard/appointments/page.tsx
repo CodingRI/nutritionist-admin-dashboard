@@ -51,11 +51,12 @@ export default function AppointmentsPage() {
   >([]);
   const [loading, setLoading] = useState(true);
 
+  const mainAppUrl = process.env.NEXT_PUBLIC_MAIN_APP_URL;
   const fetchAppointments = async () => {
     try {
       setLoading(true);
 
-      const response = await fetch("/api/admin/appointments");
+      const response = await fetch(`${mainAppUrl}/api/admin/appointments`);
 
       const data = await response.json();
 
