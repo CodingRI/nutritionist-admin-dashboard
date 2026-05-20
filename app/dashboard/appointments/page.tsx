@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { auth } from "@clerk/nextjs/server";
 import {
   Table,
   TableBody,
@@ -56,7 +57,16 @@ export default function AppointmentsPage() {
     try {
       setLoading(true);
 
-      const response = await fetch(`${mainAppUrl}/api/admin/appointments`);
+      const {getToken} = await auth();
+      const token = await getToken();
+      const response = await fetch(`${mainAppUrl}/api/admin/appointments`, {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}` // Explicit token attachment
+        },
+        credentials: 'include'
+      }
+      );
 
       const data = await response.json();
 
