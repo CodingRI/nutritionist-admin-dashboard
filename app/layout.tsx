@@ -23,6 +23,11 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   title: 'NourishWell Admin Dashboard',
   description: 'Premium admin dashboard for nutritionist platform management',
+  icons: {
+    icon: [
+      "/icon.png",
+    ]
+  },
 }
 
 export default function RootLayout({
